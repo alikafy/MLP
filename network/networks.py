@@ -41,8 +41,7 @@ class Network(InterfaceNetwork):
         layers.extend(self.hidden_layers)
         weights = []
         for layer in layers:
-            number_weight = layer.neuron * layer.next().neuron
-            weight = numpy.random.random(number_weight)
+            weight = numpy.random.rand(layer.neuron, layer.next().neuron)
             layer.weights = weight
             weights.append(weight)
         return weights
