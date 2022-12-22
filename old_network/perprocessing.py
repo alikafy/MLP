@@ -3,7 +3,7 @@ import numpy as np
 from sklearn import preprocessing
 
 
-def preprocessing_raw_data(data_path: str = 'BankWages.csv'):
+def preprocessing_raw_data(data_path: str = 'BankWages3.csv'):
     my_data = pd.read_csv(data_path, delimiter=',')
     my_data.columns = ['job', 'education', 'gender', 'minority']
     data_without_labels = my_data.filter(items=['job', 'education', 'gender'])
