@@ -39,6 +39,12 @@ class AbstractLayer(InterfaceLayer):
     def next(self) -> InterfaceLayer:
         return self._next_layer
 
+    def has_next(self) -> bool:
+        return True if self._next_layer is not None else False
+
+    def __str__(self):
+        return self.type_layer.value
+
 
 class Layer(AbstractLayer):
     def __init__(self, neuron: int, type_layer: TypeLayer, activation_function: ActivationFunction = None):
