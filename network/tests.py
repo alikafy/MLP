@@ -1,10 +1,11 @@
 from unittest import TestCase
 
 from activation_functions import Linear, Sigmoid
+from error_functions import SSE
 from layer import Layer, TypeLayer
 from networks import Network
 from perprocessing import PerProcessingBankData
-from train import forward
+from train import forward, backward
 
 
 class InitNetworkTest(TestCase):
@@ -50,11 +51,15 @@ class TrainTest(TestCase):
                                   activation_function=Sigmoid())
         self.network = Network(input_layer=self.input_layer, hidden_layers=[self.hidden_layer_1, self.hidden_layer_2],
                                output_layer=self.output_layer, alpha=0.5)
-
-    def test_forward_action(self):
-        data = PerProcessingBankData("../data/BankWages2.csv").per_process()
         self.network.initial_network()
         self.network.initial_weights()
-        inputs, target = data
+
+    def test_forward_action(self):
+        inputs, target = PerProcessingBankData("../data/BankWages2.csv").per_process()
         output = forward(self.network, inputs[0])
         self.assertTrue(output.shape[0], 1)
+
+    def test_backward_action(self):
+        error_function = SSE()
+        inputs, target = PerProcessingBankData("../data/BankWages2.csv").per_process()
+        backward(network=self.network, alpha=0.5, error_function=error_function, data=inputs[0], target=target[0])
