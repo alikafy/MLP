@@ -19,6 +19,7 @@ class InterfaceLayer(ABC):
     neuron: int = None
     type_layer: TypeLayer = None
     weights: np.ndarray = None
+    bias: np.ndarray = None
 
     @abstractmethod
     def set_next(self, layer: InterfaceLayer):
@@ -31,6 +32,7 @@ class InterfaceLayer(ABC):
 
 class AbstractLayer(InterfaceLayer):
     _next_layer: InterfaceLayer = None
+    _previous_layer: InterfaceLayer = None
 
     def set_next(self, layer: InterfaceLayer):
         self._next_layer = layer
@@ -41,6 +43,16 @@ class AbstractLayer(InterfaceLayer):
 
     def has_next(self) -> bool:
         return True if self._next_layer is not None else False
+
+    def set_previous(self, layer: InterfaceLayer):
+        self._previous_layer = layer
+        return layer
+
+    def previous(self) -> InterfaceLayer:
+        return self._previous_layer
+
+    def has_previous(self) -> bool:
+        return True if self._previous_layer is not None else False
 
     def __str__(self):
         return self.type_layer.value
