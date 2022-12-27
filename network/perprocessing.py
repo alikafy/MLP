@@ -23,7 +23,7 @@ class PerProcessingBankData(InputNetwork):
 
         scaled_data = preprocessing.StandardScaler().fit(inputs)
         scaled_data = scaled_data.transform(inputs)
-
+        scaled_data = scaled_data.reshape(473, 1, 6)
         targets = targets.replace("yes", 1)
         targets = targets.replace("no", 0)
         return scaled_data, targets

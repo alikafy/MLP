@@ -11,7 +11,6 @@ class InterfaceNetwork(ABC):
     hidden_layers: List[AbstractLayer] = None
     input_layer: AbstractLayer = None
     output_layer: AbstractLayer = None
-    alpha: float = None
 
     def fit(self, **kwargs):
         pass
@@ -33,12 +32,13 @@ class InterfaceNetwork(ABC):
 
 
 class Network(InterfaceNetwork):
-    def __init__(self, input_layer: AbstractLayer, hidden_layers: List[AbstractLayer], output_layer: AbstractLayer,
-                 alpha: float, loss_function: LostFunction):
+    def __init__(self, input_layer: AbstractLayer,
+                 hidden_layers: List[AbstractLayer],
+                 output_layer: AbstractLayer,
+                 loss_function: LostFunction):
         self.input_layer = input_layer
         self.hidden_layers = hidden_layers
         self.output_layer = output_layer
-        self.alpha = alpha
         self.loss_function = loss_function
 
     @property
@@ -73,29 +73,26 @@ class Network(InterfaceNetwork):
         next_layer.set_previous(self.input_layer)
 
     def initial_weights(self):
-        layers = self.hidden_layers
-        layers.extend([self.output_layer])
+        layer = self.input_layer.next()
         weights = []
-        for layer in layers:
+        while layer:
             weight = np.random.rand(layer.previous().neuron, layer.neuron) - 0.5
             layer.weights = weight
             weights.append(weight)
+            layer = layer.next()
         return weights
 
     def initial_bias(self):
-        layers = []
-        layers.extend(self.hidden_layers)
-        layers.extend([self.output_layer])
+        layer = self.input_layer.next()
         biases = []
-        for layer in layers:
+        while layer:
             bias = np.random.rand(1, layer.neuron) - 0.5
             layer.bias = bias
             biases.append(bias)
+            layer = layer.next()
         return biases
 
     def forward(self, data, until_layer: AbstractLayer = None):
-        if not self.input_layer.neuron == data.shape[1]:
-            raise ValueError
         forward_data = data.copy()
 
         for layer in self.layers:
@@ -110,22 +107,24 @@ class Network(InterfaceNetwork):
         for epoch in range(epochs):
             total_loss = 0
             for index, data in enumerate(x_train):
+
                 # forward propagation
                 output = self.forward(data)
+
                 # compute loss (for display purpose only)
-                total_loss += self.loss_function.function(y_train[index], output)
+                total_loss += self.loss_function.function(output, y_train[index])
 
                 # backward propagation
-                error = self.loss_function.derivative(y_train[index], output)
-
+                error = self.loss_function.derivative(output, y_train[index])
                 for layer in reversed(self.layers):
                     error = layer.backward(output_error=error, learning_rate=learning_rate)
+
             # calculate average error on all samples
             total_loss /= len(x_train)
-            print('epoch %d/%d   error=%f' % (epoch+1, epochs, total_loss))
+            print('epoch %d/%d   error=%f' % (epoch + 1, epochs, total_loss))
 
     def predict(self, data):
         result = []
-        for i in data:
-            result.append(self.forward(i))
+        for index in data:
+            result.append(self.forward(index))
         return result

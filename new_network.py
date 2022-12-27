@@ -139,18 +139,20 @@ class Network:
 
 
 # training data
-# x_train, y_train = PerProcessingBankData("./data/BankWages2.csv").per_process()
+x_train, y_train = PerProcessingBankData("./data/BankWages2.csv").per_process()
 
-x_train = np.array([[[0, 0]], [[0, 1]], [[1, 0]], [[1, 1]]])
-y_train = np.array([[[0]], [[1]], [[1]], [[0]]])
+# x_train = np.array([[[0, 0]], [[0, 1]], [[1, 0]], [[1, 1]]])
+# y_train = np.array([[[0]], [[1]], [[1]], [[0]]])
 
 # network
 net = Network()
-net.add(FCLayer(2, 3))
+net.add(FCLayer(6, 3))
 net.add(ActivationLayer(tanh, tanh_prime))
-net.add(FCLayer(3, 3))
+net.add(FCLayer(3, 10))
 net.add(ActivationLayer(tanh, tanh_prime))
-net.add(FCLayer(3, 1))
+net.add(FCLayer(10, 10))
+net.add(ActivationLayer(tanh, tanh_prime))
+net.add(FCLayer(10, 1))
 net.add(ActivationLayer(tanh, tanh_prime))
 
 # train

@@ -58,7 +58,6 @@ class AbstractLayer(InterfaceLayer):
 
 class Layer(AbstractLayer):
     def __init__(self, neuron: int, type_layer: TypeLayer, activation_function: ActivationFunction = None):
-        self.forward_data = None
         self.output = None
         self.input = None
         self.activation_function = activation_function
