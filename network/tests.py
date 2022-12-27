@@ -1,11 +1,10 @@
 from unittest import TestCase
 
 from activation_functions import Linear, Sigmoid
-from error_functions import SSE
 from layer import Layer, TypeLayer
+from loss_functions import SSE, MSE
 from networks import Network
 from perprocessing import PerProcessingBankData
-from train import forward, backward
 
 
 class InitNetworkTest(TestCase):
@@ -19,7 +18,7 @@ class InitNetworkTest(TestCase):
         self.output_layer = Layer(neuron=2, type_layer=TypeLayer.output_layer,
                                   activation_function=activation_function())
         self.network = Network(input_layer=self.input_layer, hidden_layers=[self.hidden_layer_1, self.hidden_layer_2],
-                               output_layer=self.output_layer, alpha=0.5)
+                               output_layer=self.output_layer, alpha=0.5, loss_function=SSE())
 
     def test_init_network(self):
         self.network.initial_network()
@@ -66,29 +65,31 @@ class TrainTest(TestCase):
         self.output_layer = Layer(neuron=1, type_layer=TypeLayer.output_layer,
                                   activation_function=Sigmoid())
         self.network = Network(input_layer=self.input_layer, hidden_layers=[self.hidden_layer_1, self.hidden_layer_2],
-                               output_layer=self.output_layer, alpha=0.5)
+                               output_layer=self.output_layer, alpha=0.5, loss_function=MSE())
         self.network.initial_network()
         self.network.initial_weights()
         self.network.initial_bias()
 
     def test_forward_action(self):
         inputs, target = PerProcessingBankData("../data/BankWages2.csv").per_process()
-        output = forward(self.network, inputs[0])
+        output = self.network.forward(inputs[0])
         self.assertEqual(output.shape[0], 1)
 
     def test_forward_action_with_until_layer(self):
         inputs, target = PerProcessingBankData("../data/BankWages2.csv").per_process()
-        output = forward(self.network, inputs[0], self.input_layer)
+        output = self.network.forward(inputs[0], self.input_layer)
         self.assertEqual(output.shape[0], 6)
-        output = forward(self.network, inputs[0], self.hidden_layer_1)
+        output = self.network.forward(inputs[0], self.hidden_layer_1)
+        self.assertEqual(output.shape[0], 6)
+        output = self.network.forward(inputs[0], self.hidden_layer_2)
         self.assertEqual(output.shape[0], 3)
-        output = forward(self.network, inputs[0], self.hidden_layer_2)
+        output = self.network.forward(inputs[0], self.output_layer)
         self.assertEqual(output.shape[0], 4)
-        output = forward(self.network, inputs[0], self.output_layer)
+        output = self.network.forward(inputs[0])
         self.assertEqual(output.shape[0], 1)
 
     def test_backward_action(self):
-        error_function = SSE()
         inputs, target = PerProcessingBankData("../data/BankWages2.csv").per_process()
-        backward(network=self.network, alpha=0.5, error_function=error_function, data=inputs[0], target=target[0])
-        self.fail()
+        self.network.fit(x_train=inputs, y_train=target, epochs=1000, learning_rate=0.3)
+        predict = self.network.forward(inputs[125])
+        self.assertEqual(predict[0], target[125][0])

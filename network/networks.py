@@ -1,15 +1,16 @@
 from abc import ABC
 from typing import List
 
-import numpy
+import numpy as np
 
-from layer import Layer
+from layer import AbstractLayer
+from loss_functions import LostFunction
 
 
 class InterfaceNetwork(ABC):
-    hidden_layers: List[Layer] = None
-    input_layer: Layer = None
-    output_layer: Layer = None
+    hidden_layers: List[AbstractLayer] = None
+    input_layer: AbstractLayer = None
+    output_layer: AbstractLayer = None
     alpha: float = None
 
     def train(self):
@@ -17,23 +18,28 @@ class InterfaceNetwork(ABC):
 
     def predict(self):
         pass
-    
+
     def initial_network(self):
         pass
 
     def initial_weights(self):
         pass
 
-    def initial_bias(self):
+    def forward(self, data, until_layer: AbstractLayer = None):
+        pass
+
+    def backward(self, **kwargs):
         pass
 
 
 class Network(InterfaceNetwork):
-    def __init__(self, input_layer: Layer, hidden_layers: List[Layer], output_layer: Layer, alpha: float):
+    def __init__(self, input_layer: AbstractLayer, hidden_layers: List[AbstractLayer], output_layer: AbstractLayer,
+                 alpha: float, loss_function: LostFunction):
         self.input_layer = input_layer
         self.hidden_layers = hidden_layers
         self.output_layer = output_layer
         self.alpha = alpha
+        self.loss_function = loss_function
 
     def initial_network(self):
         self.set_forward_flow_network()
@@ -60,7 +66,7 @@ class Network(InterfaceNetwork):
         layers.extend([self.output_layer])
         weights = []
         for layer in layers:
-            weight = numpy.random.rand(layer.previous().neuron, layer.neuron)
+            weight = np.random.rand(layer.previous().neuron, layer.neuron)
             layer.weights = weight
             weights.append(weight)
         return weights
@@ -71,7 +77,40 @@ class Network(InterfaceNetwork):
         layers.extend([self.output_layer])
         biases = []
         for layer in layers:
-            bias = numpy.random.rand(layer.neuron)
+            bias = np.random.rand(layer.neuron)
             layer.bias = bias
             biases.append(bias)
         return biases
+
+    def forward(self, data, until_layer: AbstractLayer = None):
+        if not self.input_layer.neuron == data.shape[0]:
+            raise ValueError
+        layer = self.input_layer
+        forward_data = data.copy()
+        while layer and layer != until_layer:
+            forward_data = layer.forward(input_data=forward_data)
+            layer = layer.next()
+
+        return forward_data
+
+    def fit(self, x_train, y_train, epochs, learning_rate):
+
+        for epoch in range(epochs):
+            total_loss = 0
+            for index, data in enumerate(x_train):
+                # forward propagation
+                output = self.forward(data)
+                # compute loss (for display purpose only)
+                total_loss += self.loss_function.function(y_train[index], output)
+
+                # backward propagation
+                error = self.loss_function.derivative(y_train[index], output)
+
+                layer = self.output_layer
+                while layer.has_previous():
+                    error = layer.backward(output_error=error, learning_rate=learning_rate)
+                    layer = layer.previous()
+
+            # calculate average error on all samples
+            total_loss /= len(x_train)
+            print('epoch %d/%d   error=%f' % (epoch+1, epochs, total_loss))
