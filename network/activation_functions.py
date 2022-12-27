@@ -1,20 +1,49 @@
 from __future__ import annotations
 
 from abc import ABC
-from math import tanh
 
+import numpy as np
 from numpy import exp
 
 
 class ActivationFunction(ABC):
+    output = None
+    input = None
+
     def function(self, x):
         raise NotImplemented
 
     def derivative(self, x):
         raise NotImplemented
 
+    def forward(self, data):
+        raise NotImplemented
 
-class Linear(ActivationFunction):
+    def backward(self, **kwargs):
+        raise NotImplemented
+
+
+class ConcreteActivationFunction(ActivationFunction):
+    def __init__(self):
+        self.output = None
+        self.input = None
+
+    def function(self, x):
+        raise NotImplemented
+
+    def derivative(self, x):
+        raise NotImplemented
+
+    def forward(self, input_data):
+        self.input = input_data
+        self.output = self.function(self.input)
+        return self.output
+
+    def backward(self, output_error, learning_rate):
+        return self.derivative(self.input) * output_error
+
+
+class Linear(ConcreteActivationFunction):
     def function(self, x):
         return x
 
@@ -22,7 +51,7 @@ class Linear(ActivationFunction):
         return 1
 
 
-class Sigmoid(ActivationFunction):
+class Sigmoid(ConcreteActivationFunction):
     def function(self, x):
         return 1.0 / (1.0 + exp(-x))
 
@@ -30,15 +59,15 @@ class Sigmoid(ActivationFunction):
         return self.function(x) * (1.0 - self.function(x))
 
 
-class Tanh(ActivationFunction):
+class Tanh(ConcreteActivationFunction):
     def function(self, x):
-        return (exp(x) - exp(-x)) / (exp(x) + exp(-x))
+        return np.tanh(x)
 
     def derivative(self, x):
-        return 1 - tanh(x) ** 2
+        return 1 - np.tanh(x) ** 2
 
 
-class Relu(ActivationFunction):
+class Relu(ConcreteActivationFunction):
     def function(self, x):
         return x * (x > 0)
 

@@ -1,6 +1,8 @@
 from unittest import TestCase
 
-from activation_functions import Linear, Sigmoid
+import numpy as np
+
+from activation_functions import Linear, Sigmoid, Tanh
 from layer import Layer, TypeLayer
 from loss_functions import SSE, MSE
 from networks import Network
@@ -56,14 +58,14 @@ class InitNetworkTest(TestCase):
 
 class TrainTest(TestCase):
     def setUp(self):
-        activation_function = Linear
-        self.input_layer = Layer(neuron=6, type_layer=TypeLayer.input_layer)
+        activation_function = Tanh
+        self.input_layer = Layer(neuron=2, type_layer=TypeLayer.input_layer)
         self.hidden_layer_1 = Layer(neuron=3, type_layer=TypeLayer.hidden_layer,
                                     activation_function=activation_function())
-        self.hidden_layer_2 = Layer(neuron=4, type_layer=TypeLayer.hidden_layer,
+        self.hidden_layer_2 = Layer(neuron=3, type_layer=TypeLayer.hidden_layer,
                                     activation_function=activation_function())
         self.output_layer = Layer(neuron=1, type_layer=TypeLayer.output_layer,
-                                  activation_function=Sigmoid())
+                                  activation_function=activation_function())
         self.network = Network(input_layer=self.input_layer, hidden_layers=[self.hidden_layer_1, self.hidden_layer_2],
                                output_layer=self.output_layer, alpha=0.5, loss_function=MSE())
         self.network.initial_network()
@@ -90,6 +92,8 @@ class TrainTest(TestCase):
 
     def test_backward_action(self):
         inputs, target = PerProcessingBankData("../data/BankWages2.csv").per_process()
-        self.network.fit(x_train=inputs, y_train=target, epochs=1000, learning_rate=0.3)
-        predict = self.network.forward(inputs[125])
-        self.assertEqual(predict[0], target[125][0])
+        x_train = np.array([[[0, 0]], [[0, 1]], [[1, 0]], [[1, 1]]])
+        y_train = np.array([[[0]], [[1]], [[1]], [[0]]])
+        self.network.fit(x_train=x_train, y_train=y_train, epochs=5000, learning_rate=0.1)
+        predict = self.network.predict(x_train)
+        self.assertTrue(predict[0] - y_train[0] < 0.1)

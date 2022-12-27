@@ -13,10 +13,10 @@ class InterfaceNetwork(ABC):
     output_layer: AbstractLayer = None
     alpha: float = None
 
-    def train(self):
+    def fit(self, **kwargs):
         pass
 
-    def predict(self):
+    def predict(self, data):
         pass
 
     def initial_network(self):
@@ -40,6 +40,17 @@ class Network(InterfaceNetwork):
         self.output_layer = output_layer
         self.alpha = alpha
         self.loss_function = loss_function
+
+    @property
+    def layers(self):
+        layers = []
+        layer = self.input_layer.next()
+        while layer:
+            layers.append(layer)
+            if layer.activation_function is not None:
+                layers.append(layer.activation_function)
+            layer = layer.next()
+        return layers
 
     def initial_network(self):
         self.set_forward_flow_network()
@@ -66,7 +77,7 @@ class Network(InterfaceNetwork):
         layers.extend([self.output_layer])
         weights = []
         for layer in layers:
-            weight = np.random.rand(layer.previous().neuron, layer.neuron)
+            weight = np.random.rand(layer.previous().neuron, layer.neuron) - 0.5
             layer.weights = weight
             weights.append(weight)
         return weights
@@ -77,19 +88,20 @@ class Network(InterfaceNetwork):
         layers.extend([self.output_layer])
         biases = []
         for layer in layers:
-            bias = np.random.rand(layer.neuron)
+            bias = np.random.rand(1, layer.neuron) - 0.5
             layer.bias = bias
             biases.append(bias)
         return biases
 
     def forward(self, data, until_layer: AbstractLayer = None):
-        if not self.input_layer.neuron == data.shape[0]:
+        if not self.input_layer.neuron == data.shape[1]:
             raise ValueError
-        layer = self.input_layer
         forward_data = data.copy()
-        while layer and layer != until_layer:
+
+        for layer in self.layers:
+            if layer == until_layer:
+                break
             forward_data = layer.forward(input_data=forward_data)
-            layer = layer.next()
 
         return forward_data
 
@@ -106,11 +118,14 @@ class Network(InterfaceNetwork):
                 # backward propagation
                 error = self.loss_function.derivative(y_train[index], output)
 
-                layer = self.output_layer
-                while layer.has_previous():
+                for layer in reversed(self.layers):
                     error = layer.backward(output_error=error, learning_rate=learning_rate)
-                    layer = layer.previous()
-
             # calculate average error on all samples
             total_loss /= len(x_train)
             print('epoch %d/%d   error=%f' % (epoch+1, epochs, total_loss))
+
+    def predict(self, data):
+        result = []
+        for i in data:
+            result.append(self.forward(i))
+        return result
